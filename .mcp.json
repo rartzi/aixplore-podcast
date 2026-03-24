@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "podcast": {
+      "command": "python",
+      "args": ["-m", "podcast_mcp"],
+      "cwd": ".",
+      "env": {
+        "GEMINI_API_KEY": "",
+        "GEMINI_BASE_URL": "https://your-ai-gateway.example.com/v1beta"
+      }
+    }
+  }
+}

@@ -105,7 +105,7 @@ GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
   "mcpServers": {
     "podcast": {
       "command": "python",
-      "args": ["-m", "podcast_mcp.server"],
+      "args": ["-m", "podcast_mcp"],
       "cwd": "/path/to/podcast-mcp",
       "env": {
         "GEMINI_API_KEY": "your-key",
