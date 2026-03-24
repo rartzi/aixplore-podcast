@@ -44,15 +44,17 @@ class PodcastLength(str, Enum):
 
 
 class GeminiVoice(str, Enum):
-    """Available Gemini TTS prebuilt voices."""
-    PUCK = "Puck"          # Conversational, friendly
-    CHARON = "Charon"      # Deep, authoritative
-    KORE = "Kore"          # Neutral, professional
-    FENRIR = "Fenrir"      # Energetic, dynamic
-    AOEDE = "Aoede"        # Warm, melodic
-    LEDA = "Leda"          # Clear, articulate
-    ORUS = "Orus"          # Calm, measured
-    ZEPHYR = "Zephyr"      # Light, upbeat
+    """Available Gemini TTS prebuilt voices (gender, character)."""
+    # Male voices
+    PUCK = "Puck"          # Male — conversational, friendly
+    CHARON = "Charon"      # Male — deep, authoritative
+    FENRIR = "Fenrir"      # Male — energetic, dynamic
+    ORUS = "Orus"          # Male — calm, measured
+    # Female voices
+    KORE = "Kore"          # Female — neutral, professional
+    AOEDE = "Aoede"        # Female — warm, melodic
+    LEDA = "Leda"          # Female — clear, articulate
+    ZEPHYR = "Zephyr"      # Female — light, upbeat
 
 
 class SpeakerMode(str, Enum):
@@ -143,8 +145,8 @@ class PodcastSettings(BaseSettings):
 
     # --- Show defaults ---
     podcast_show_name: str = Field(
-        default="AIXplore",
-        description="Default podcast show name",
+        default="My Podcast",
+        description="Default podcast show name (set to your show via PODCAST_SHOW_NAME env var)",
     )
     podcast_host_name: str = Field(
         default="Host",

@@ -139,9 +139,9 @@ class SynthesizeInput(BaseModel):
     host_voice: Optional[GeminiVoice] = Field(
         default=None,
         description=(
-            "Voice for the host. Options: Puck (friendly), Charon (authoritative), "
-            "Kore (professional), Fenrir (dynamic), Aoede (warm), Leda (clear), "
-            "Orus (calm), Zephyr (upbeat). Default: from PODCAST_HOST_VOICE env var."
+            "Voice for the host. Male: Puck (friendly), Charon (authoritative), "
+            "Fenrir (dynamic), Orus (calm). Female: Kore (professional), Aoede (warm), "
+            "Leda (clear), Zephyr (upbeat). Default: from PODCAST_HOST_VOICE env var."
         ),
     )
     guest_voice: Optional[GeminiVoice] = Field(

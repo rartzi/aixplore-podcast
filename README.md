@@ -196,16 +196,16 @@ End-to-end: content → transcript → audio in one call. Accepts all parameters
 
 ### Available Voices
 
-| Voice | Character |
-|-------|-----------|
-| `Puck` | Conversational, friendly |
-| `Charon` | Deep, authoritative |
-| `Kore` | Neutral, professional |
-| `Fenrir` | Energetic, dynamic |
-| `Aoede` | Warm, melodic |
-| `Leda` | Clear, articulate |
-| `Orus` | Calm, measured |
-| `Zephyr` | Light, upbeat |
+| Voice | Gender | Character |
+|-------|--------|-----------|
+| `Puck` | Male | Conversational, friendly |
+| `Charon` | Male | Deep, authoritative |
+| `Fenrir` | Male | Energetic, dynamic |
+| `Orus` | Male | Calm, measured |
+| `Kore` | Female | Neutral, professional |
+| `Aoede` | Female | Warm, melodic |
+| `Leda` | Female | Clear, articulate |
+| `Zephyr` | Female | Light, upbeat |
 
 ## Examples
 
