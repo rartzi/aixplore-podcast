@@ -1,16 +1,44 @@
 """Configuration and settings for the Podcast MCP server.
 
-Loads settings from environment variables, .env file, or Azure Key Vault.
+Loads settings from environment variables, macOS Keychain, or .env file.
+Resolution order: env var → Keychain → .env → default.
 Each user provides their own GEMINI_API_KEY.
 """
 
 import logging
 import os
+import platform
+import subprocess
 from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field, ConfigDict
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# macOS Keychain helper
+# ---------------------------------------------------------------------------
+
+def _read_keychain(service: str) -> Optional[str]:
+    """Read a secret from macOS Keychain. Returns None if not found or not on macOS."""
+    if platform.system() != "Darwin":
+        return None
+    try:
+        result = subprocess.run(
+            ["security", "find-generic-password", "-s", service, "-w"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            logger.debug("Loaded %s from macOS Keychain", service)
+            return result.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        pass
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -93,11 +121,18 @@ LENGTH_TURN_TARGETS: dict[PodcastLength, tuple[int, int]] = {
 
 
 # ---------------------------------------------------------------------------
-# Settings (loaded from env / .env)
+# Settings (loaded from env / Keychain / .env)
 # ---------------------------------------------------------------------------
 
+# Keys to look up in macOS Keychain when not set via env or .env
+_KEYCHAIN_FIELDS = {
+    "gemini_api_key": "GEMINI_API_KEY",
+    "gemini_base_url": "GEMINI_BASE_URL",
+}
+
+
 class PodcastSettings(BaseSettings):
-    """Server-wide settings loaded from environment variables."""
+    """Server-wide settings. Resolution: env var → macOS Keychain → .env → default."""
 
     model_config = ConfigDict(
         env_file=".env",
@@ -191,6 +226,16 @@ class PodcastSettings(BaseSettings):
         default=24000,
         description="Audio sample rate in Hz",
     )
+
+    def model_post_init(self, __context: object) -> None:
+        """After pydantic loads env/.env, fill blanks from macOS Keychain."""
+        for field_name, service_name in _KEYCHAIN_FIELDS.items():
+            current = getattr(self, field_name)
+            # Only check Keychain if the value is empty/default
+            if not current or current == self.model_fields[field_name].default:
+                value = _read_keychain(service_name)
+                if value:
+                    object.__setattr__(self, field_name, value)
 
     def get_auth(self) -> tuple[dict[str, str], dict[str, str]]:
         """Return (headers, query_params) for Gemini API authentication.

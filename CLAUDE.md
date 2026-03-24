@@ -29,7 +29,7 @@ uv run python scripts/check_models.py
 The package lives in `src/podcast_mcp/` with five modules:
 
 - **server.py** — MCP server entry point. Defines three tools via `FastMCP` with Pydantic input models (`TranscriptInput`, `SynthesizeInput`, `CreateInput`). All tool handlers return JSON strings. Logging goes to stderr (MCP requirement).
-- **config.py** — All enums (`PodcastStyle`, `AudienceLevel`, `PodcastLength`, `GeminiVoice`, `SpeakerMode`, `AuthMode`) and `PodcastSettings` (pydantic-settings, loads from env/.env). Auth auto-detection: `googleapis.com` URLs use `?key=` query param, everything else uses `x-api-key` header (Azure AI Gateway).
+- **config.py** — All enums (`PodcastStyle`, `AudienceLevel`, `PodcastLength`, `GeminiVoice`, `SpeakerMode`, `AuthMode`) and `PodcastSettings` (pydantic-settings). Settings resolution: env var → macOS Keychain → .env → default. Auth auto-detection: `googleapis.com` URLs use `?key=` query param, everything else uses `x-api-key` header (Azure AI Gateway).
 - **transcript.py** — Builds style-specific system prompts from `STYLE_PROMPTS` and `AUDIENCE_PROMPTS` dicts, calls Gemini `generateContent` with `responseMimeType: application/json` and a response schema to get structured `[{speaker, line}]` dialogue.
 - **audio.py** — Chunks dialogue into ≤1500-char segments (TTS preview models disconnect on large payloads), calls Gemini TTS with retry logic (3 attempts, exponential backoff), concatenates WAV/PCM segments. Supports single-speaker (`voiceConfig`) and multi-speaker (`multiSpeakerVoiceConfig`) request formats.
 - **content.py** — File extraction: PDF via pypdf, text/markdown/html via direct read. Truncates at 100k chars on sentence boundary.
@@ -50,12 +50,15 @@ Add to Claude Code config (`~/.claude.json` or project `.mcp.json`):
   "mcpServers": {
     "podcast": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/podcast-mcp", "podcast-mcp"],
-      "env": {
-        "GEMINI_API_KEY": "your-key",
-        "GEMINI_BASE_URL": "https://your-gateway/v1beta"
-      }
+      "args": ["run", "--directory", "/path/to/podcast-mcp", "podcast-mcp"]
     }
   }
 }
+```
+
+Credentials are resolved automatically: env var → macOS Keychain → `.env` file. To store in Keychain:
+
+```bash
+security add-generic-password -s GEMINI_API_KEY -a podcast-mcp -w "your-key"
+security add-generic-password -s GEMINI_BASE_URL -a podcast-mcp -w "https://your-gateway/v1beta"
 ```

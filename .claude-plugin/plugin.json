@@ -13,11 +13,7 @@
   "mcpServers": {
     "podcast": {
       "command": "uv",
-      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}", "podcast-mcp"],
-      "env": {
-        "GEMINI_API_KEY": "",
-        "GEMINI_BASE_URL": "https://your-ai-gateway.example.com/v1beta"
-      }
+      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}", "podcast-mcp"]
     }
   }
 }
