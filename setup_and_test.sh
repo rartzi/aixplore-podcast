@@ -9,18 +9,20 @@ set -e
 echo "🎙️  AIXplore Podcast Generator — Setup"
 echo "========================================"
 
-# Create virtual environment if it doesn't exist
-if [ ! -d ".venv" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv .venv
+# Prefer uv for faster installs
+if command -v uv &>/dev/null; then
+    echo "Using uv (fast mode)..."
+    uv pip install -e . --quiet
+else
+    echo "uv not found, falling back to pip..."
+    # Create virtual environment if it doesn't exist
+    if [ ! -d ".venv" ]; then
+        echo "Creating virtual environment..."
+        python3 -m venv .venv
+    fi
+    source .venv/bin/activate
+    pip install -e . --quiet
 fi
-
-# Activate it
-source .venv/bin/activate
-
-# Install the package
-echo "Installing dependencies..."
-pip install -e . --quiet
 
 # Check for API key
 if [ -z "$GEMINI_API_KEY" ]; then

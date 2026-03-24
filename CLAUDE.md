@@ -9,21 +9,19 @@ An MCP server that transforms documents (PDF, markdown, text) into podcast audio
 ## Commands
 
 ```bash
-# Install (editable)
-pip install -e .
+# Install (editable, uv is preferred — much faster than pip)
+uv pip install -e .
 
 # Run the MCP server (stdio transport)
-python -m podcast_mcp
-# or
-podcast-mcp
+uv run podcast-mcp
 
 # Run end-to-end test (requires GEMINI_API_KEY)
-python test_e2e.py
-python test_e2e.py --style scientific --length medium
-python test_e2e.py --transcript-only
+uv run python test_e2e.py
+uv run python test_e2e.py --style scientific --length medium
+uv run python test_e2e.py --transcript-only
 
 # Check available Gemini models
-python check_models.py
+uv run python check_models.py
 ```
 
 ## Architecture
@@ -51,9 +49,8 @@ Add to Claude Code config (`~/.claude.json` or project `.mcp.json`):
 {
   "mcpServers": {
     "podcast": {
-      "command": "python",
-      "args": ["-m", "podcast_mcp"],
-      "cwd": "/path/to/podcast-mcp",
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/podcast-mcp", "podcast-mcp"],
       "env": {
         "GEMINI_API_KEY": "your-key",
         "GEMINI_BASE_URL": "https://your-gateway/v1beta"

@@ -69,7 +69,8 @@ You can run both phases end-to-end, or generate the transcript first, review/edi
 
 ```bash
 cd podcast-mcp
-pip install -e .
+uv pip install -e .
+# or without uv: pip install -e .
 ```
 
 ### Configure
@@ -104,9 +105,8 @@ GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
 {
   "mcpServers": {
     "podcast": {
-      "command": "python",
-      "args": ["-m", "podcast_mcp"],
-      "cwd": "/path/to/podcast-mcp",
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/podcast-mcp", "podcast-mcp"],
       "env": {
         "GEMINI_API_KEY": "your-key",
         "GEMINI_BASE_URL": "https://your-gateway/v1beta"
@@ -116,14 +116,15 @@ GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
 }
 ```
 
-Or using `uv`:
+Or without `uv`:
 
 ```json
 {
   "mcpServers": {
     "podcast": {
-      "command": "uv",
-      "args": ["run", "--directory", "/path/to/podcast-mcp", "podcast-mcp"],
+      "command": "python",
+      "args": ["-m", "podcast_mcp"],
+      "cwd": "/path/to/podcast-mcp",
       "env": {
         "GEMINI_API_KEY": "your-key",
         "GEMINI_BASE_URL": "https://your-gateway/v1beta"
