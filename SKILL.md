@@ -1,230 +1,116 @@
-# AIXplore Podcast Generator
+---
+name: podcast
+description: >-
+  Generate podcast audio from documents, text, or any content using Gemini AI.
+  Two-phase pipeline: transcript generation then TTS audio synthesis, exposed as
+  MCP tools. Use this skill whenever the user wants to create a podcast, generate
+  audio from a document, turn content into a conversation, make an episode, create
+  a briefing, or convert text/PDF/markdown into spoken audio. Also use when the user
+  mentions podcast styles (scientific, debate, casual chat, interview, news briefing),
+  voice selection, or speaker configuration. Triggers on: "create a podcast",
+  "make an episode", "turn this into audio", "generate a podcast from",
+  "podcast from this PDF", "news briefing", "single speaker", "multi speaker",
+  "synthesize audio", "generate transcript".
+---
 
-Generate engaging, NotebookLM-style podcast audio from any content using Gemini AI.
+# Podcast Generator
 
-## Overview
+Transform any content into natural-sounding podcast audio via three MCP tools.
 
-This MCP server transforms documents (PDF, markdown, text) into natural-sounding podcast conversations. It uses a two-phase pipeline:
+## Tool Selection
 
-1. **Transcript Generation** — Gemini Flash/Pro creates a structured dialogue from your content
-2. **Audio Synthesis** — Gemini TTS renders the dialogue with distinct speaker voices
+Choose the right tool based on what the user needs:
 
-## Quick Start
-
-### Prerequisites
-
-- Python 3.10+
-- A Gemini API key (direct or via Azure AI Gateway)
-
-### Installation
-
-```bash
-cd podcast-mcp
-pip install -e .
-```
-
-### Configuration
-
-Create a `.env` file or set environment variables:
-
-```env
-# Required
-GEMINI_API_KEY=your-api-key-here
-GEMINI_BASE_URL=https://your-gateway.example.com/v1beta
-
-# Optional — Show defaults
-PODCAST_SHOW_NAME=AIXplore
-PODCAST_HOST_NAME=Alex
-PODCAST_GUEST_NAME=Dr. Chen
-PODCAST_HOST_VOICE=Kore
-PODCAST_GUEST_VOICE=Puck
-
-# Optional — Style defaults
-PODCAST_DEFAULT_STYLE=topic_explainer
-PODCAST_DEFAULT_AUDIENCE=technical
-PODCAST_DEFAULT_LENGTH=medium
-
-# Optional — Models
-GEMINI_TRANSCRIPT_MODEL=gemini-2.5-flash
-GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
-```
-
-### Add to Claude Code
-
-Add to your `claude_code_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "podcast": {
-      "command": "python",
-      "args": ["-m", "podcast_mcp.server"],
-      "cwd": "/path/to/podcast-mcp",
-      "env": {
-        "GEMINI_API_KEY": "your-key",
-        "GEMINI_BASE_URL": "https://your-gateway/v1beta"
-      }
-    }
-  }
-}
-```
-
-Or using `uv`:
-
-```json
-{
-  "mcpServers": {
-    "podcast": {
-      "command": "uv",
-      "args": ["run", "--directory", "/path/to/podcast-mcp", "podcast-mcp"],
-      "env": {
-        "GEMINI_API_KEY": "your-key",
-        "GEMINI_BASE_URL": "https://your-gateway/v1beta"
-      }
-    }
-  }
-}
-```
+| User Intent | Tool | Why |
+|-------------|------|-----|
+| Quick end-to-end: "create a podcast from this" | `podcast_create` | One call, content → audio |
+| Wants to review/edit before audio | `podcast_generate_transcript` first, then `podcast_synthesize_audio` | Two-step gives control |
+| Already has a transcript (or edited one) | `podcast_synthesize_audio` | Skip generation, go straight to audio |
+| Just wants the script, no audio yet | `podcast_generate_transcript` | Returns JSON + markdown preview |
 
 ## Tools
 
+### `podcast_create` — End-to-End
+
+Content → transcript → audio in one call. Use when the user just wants a podcast without reviewing the transcript.
+
+**Key parameters:**
+- `content` (string) OR `file_path` (string) — source material (one required)
+- `style` — editorial format (default: `topic_explainer`)
+- `audience` — depth level (default: `technical`)
+- `length` — `short` (~2-3min), `medium` (~5-8min), `long` (~12-18min)
+- `speaker_mode` — `single` (monologue) or `multi` (conversation, default)
+- `host_name`, `guest_name` — speaker names
+- `host_voice`, `guest_voice` — Gemini voice selection
+- `output_path` — where to save the WAV file
+
 ### `podcast_generate_transcript`
 
-Generate a dialogue transcript from content. Returns JSON you can review and edit before synthesis.
+Generate a dialogue transcript only. Returns JSON array of `{speaker, line}` turns plus a markdown preview. Use this when the user wants to review or edit before synthesis.
 
-**Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `content` | string | — | Source text (provide this OR file_path) |
-| `file_path` | string | — | Path to .pdf, .md, or .txt file |
-| `style` | enum | topic_explainer | Podcast style (see below) |
-| `audience` | enum | technical | Audience level |
-| `length` | enum | medium | Duration target |
-| `speaker_mode` | enum | multi | single or multi speaker |
-| `show_name` | string | AIXplore | Show name |
-| `host_name` | string | Host | Host speaker name |
-| `guest_name` | string | Guest | Guest speaker name |
+Same parameters as `podcast_create` except no voice/output_path params.
 
 ### `podcast_synthesize_audio`
 
-Convert a transcript to audio. Takes the JSON output from `podcast_generate_transcript`.
+Convert a transcript to WAV audio. Takes the JSON output from `podcast_generate_transcript`.
 
-**Parameters:**
+**Key parameters:**
+- `transcript` (required) — array of `{speaker, line}` objects
+- `speaker_mode`, `host_name`, `guest_name` — must match transcript
+- `host_voice`, `guest_voice` — voice selection
+- `output_path` — where to save the WAV
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `transcript` | array | (required) | Array of `{speaker, line}` objects |
-| `speaker_mode` | enum | multi | single or multi |
-| `host_name` | string | Host | Must match transcript speakers |
-| `guest_name` | string | Guest | Must match transcript speakers |
-| `host_voice` | enum | Kore | Gemini voice for host |
-| `guest_voice` | enum | Puck | Gemini voice for guest |
-| `output_path` | string | auto | Output WAV file path |
+## Styles
 
-### `podcast_create`
-
-End-to-end: content → transcript → audio in one shot.
-
-Accepts all parameters from both tools above.
-
-## Podcast Styles
-
-| Style | Description |
+| Style | When to Use |
 |-------|-------------|
-| `scientific` | Research-focused with methodology and findings |
-| `technical_deep_dive` | Implementation details and architectural trade-offs |
-| `topic_explainer` | Makes complex topics accessible with analogies |
-| `interview` | Conversational with personal experiences and opinions |
-| `news_briefing` | Concise analysis of recent developments |
-| `casual_chat` | Two friends chatting — light humor, natural tangents |
-| `debate` | Structured contrasting perspectives |
-| `storytelling` | Narrative arc with setup, tension, resolution |
+| `scientific` | Research papers, studies — methodology-focused |
+| `technical_deep_dive` | Architecture, implementation — practitioner talk |
+| `topic_explainer` | Making complex topics accessible — default choice |
+| `interview` | Personal experiences, opinions — conversational |
+| `news_briefing` | Recent developments — concise and brisk |
+| `casual_chat` | Light, fun — two friends over coffee |
+| `debate` | Contrasting perspectives — balanced arguments |
+| `storytelling` | Narrative arc — setup, tension, resolution |
 
 ## Audience Levels
 
-| Level | Description |
-|-------|-------------|
-| `general` | No jargon, first-principles explanations |
-| `technical` | Industry terminology okay, focus on how/why |
-| `expert` | Skip basics, dive into nuance and trade-offs |
-| `executive` | Strategic implications, ROI, actionable insights |
+| Level | Effect |
+|-------|--------|
+| `general` | No jargon, everyday analogies |
+| `technical` | Industry terms OK, focuses on how/why |
+| `expert` | Skips basics, nuance and trade-offs |
+| `executive` | Strategic framing, ROI, actionable insights |
 
-## Available Voices
+## Voices
 
-| Voice | Gender | Character |
-|-------|--------|-----------|
-| `Puck` | Male | Conversational, friendly |
-| `Charon` | Male | Deep, authoritative |
-| `Fenrir` | Male | Energetic, dynamic |
-| `Orus` | Male | Calm, measured |
-| `Kore` | Female | Neutral, professional |
-| `Aoede` | Female | Warm, melodic |
-| `Leda` | Female | Clear, articulate |
-| `Zephyr` | Female | Light, upbeat |
+### Male
+| Voice | Character | Best For |
+|-------|-----------|----------|
+| `Puck` | Friendly, conversational | Casual host, explainer |
+| `Charon` | Deep, authoritative | Scientific expert, news anchor |
+| `Fenrir` | Energetic, dynamic | Tech deep-dive, storytelling |
+| `Orus` | Calm, measured | Executive briefing, debate |
 
-## Usage Examples
+### Female
+| Voice | Character | Best For |
+|-------|-----------|----------|
+| `Kore` | Professional, neutral | News host, technical lead |
+| `Aoede` | Warm, melodic | Interview host, storytelling |
+| `Leda` | Clear, articulate | Scientific, executive |
+| `Zephyr` | Light, upbeat | Casual chat, explainer |
 
-### Basic: Create a podcast from a PDF
+### Recommended Pairings
+- **Scientific**: Kore (host) + Charon (guest) — professional meets authoritative
+- **Technical deep-dive**: Kore + Puck — professional lead, friendly practitioner
+- **Casual chat**: Zephyr + Puck — upbeat energy, friendly banter
+- **Debate**: Leda + Charon — clear moderator, authoritative debater
+- **News briefing**: Kore + Orus — professional anchor, measured analyst
 
-```
-Create a podcast from /path/to/paper.pdf
-```
+## Tips for Best Results
 
-### AIXplore episode with configured speakers
-
-```
-Create an AIXplore episode about this document.
-Use Alex as host and Dr. Chen as guest.
-Style: technical deep-dive, audience: technical, length: medium.
-```
-
-### Review transcript before synthesis
-
-```
-Step 1: Generate a transcript from this markdown content, scientific style
-Step 2: [Review and optionally edit the transcript]
-Step 3: Synthesize the audio with Charon for host and Aoede for guest
-```
-
-### Single-speaker briefing
-
-```
-Create a short news briefing podcast from this article.
-Single speaker, executive audience.
-```
-
-## Architecture
-
-```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│ Input File   │────▶│ Content Extractor │────▶│ Transcript Gen  │
-│ (PDF/MD/TXT) │     │ (pypdf / read)   │     │ (Gemini Flash)  │
-└─────────────┘     └──────────────────┘     └────────┬────────┘
-                                                       │
-                                              JSON dialogue
-                                                       │
-                                                       ▼
-                                             ┌─────────────────┐
-                                             │ Audio Synthesizer│
-                                             │ (Gemini TTS)     │
-                                             └────────┬────────┘
-                                                       │
-                                                  WAV audio
-                                                       │
-                                                       ▼
-                                             ┌─────────────────┐
-                                             │ Output File      │
-                                             │ (podcast_*.wav)  │
-                                             └─────────────────┘
-```
-
-## Troubleshooting
-
-**"GEMINI_API_KEY is not set"** — Set via environment variable or .env file.
-
-**"Failed to parse transcript response"** — The transcript model may not support JSON output. Try `gemini-2.5-flash` or `gemini-2.5-pro`.
-
-**"No inlineData found in response"** — The TTS model may not be available in your region or gateway. Verify `GEMINI_TTS_MODEL` and `GEMINI_BASE_URL`.
-
-**Audio sounds choppy** — Long transcripts are chunked for TTS. If chunk boundaries sound unnatural, try reducing content length or using `podcast_generate_transcript` + manual editing + `podcast_synthesize_audio`.
+- **Contrast voices**: pair different energy levels (calm host + energetic guest)
+- **Single speaker**: use `Charon` for authoritative monologues, `Aoede` for warm narration
+- **Long content**: consider `podcast_generate_transcript` first so the user can trim the transcript before paying for TTS
+- **Choppy audio**: TTS chunks at ~1500 chars — shorter content or manual transcript editing helps
+- **File types**: supports `.pdf`, `.md`, `.txt`, `.html`, `.rst`
