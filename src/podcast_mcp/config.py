@@ -4,6 +4,7 @@ Loads settings from environment variables, .env file, or Azure Key Vault.
 Each user provides their own GEMINI_API_KEY.
 """
 
+import logging
 import os
 from enum import Enum
 from typing import Optional
@@ -212,6 +213,10 @@ class PodcastSettings(BaseSettings):
                 mode = AuthMode.HEADER
 
         if mode == AuthMode.QUERY_PARAM:
+            logging.getLogger(__name__).debug(
+                "Using query-param auth — API key will appear in URLs. "
+                "Consider header-based auth (GEMINI_AUTH_MODE=header) for production."
+            )
             params["key"] = self.gemini_api_key
         else:
             headers["x-api-key"] = self.gemini_api_key

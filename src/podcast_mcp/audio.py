@@ -340,12 +340,25 @@ async def synthesize_audio(
     guest_voice = guest_voice or cfg.podcast_guest_voice
 
     # Ensure output directory exists
-    out_dir = Path(cfg.audio_output_dir)
+    out_dir = Path(cfg.audio_output_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if output_path is None:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         output_path = str(out_dir / f"podcast_{timestamp}.wav")
+    else:
+        # Validate user-supplied output path
+        out_file = Path(output_path).resolve()
+        if ".." in Path(output_path).parts:
+            raise ValueError(
+                f"Path traversal detected in output_path: '{output_path}'. "
+                "Use an absolute path or a path relative to the working directory."
+            )
+        if out_file.suffix.lower() != ".wav":
+            raise ValueError(
+                f"Output file must be a .wav file, got: '{out_file.suffix}'"
+            )
+        output_path = str(out_file)
 
     # Chunk the dialogue into small pieces for reliable TTS
     chunks = _chunk_dialogue(dialogue)

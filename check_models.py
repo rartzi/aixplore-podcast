@@ -24,7 +24,7 @@ if not API_KEY:
     sys.exit(1)
 
 print(f"Base URL: {BASE_URL}")
-print(f"API Key: {API_KEY[:10]}...")
+print(f"API Key: {API_KEY[:4]}{'*' * 8}...{API_KEY[-4:]}")
 print()
 
 # List all models

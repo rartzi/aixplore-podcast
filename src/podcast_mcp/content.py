@@ -9,6 +9,47 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+# Allowed file extensions for content extraction
+ALLOWED_EXTENSIONS = frozenset({
+    ".pdf", ".md", ".markdown", ".txt", ".text", ".rst", ".html", ".htm",
+})
+
+# Max content size accepted (characters) before truncation
+MAX_CONTENT_CHARS = 100_000
+
+
+def _validate_file_path(file_path: str) -> Path:
+    """Validate and resolve a file path, rejecting path traversal attempts.
+
+    Raises:
+        ValueError: If the path contains traversal sequences or is not a regular file.
+        FileNotFoundError: If the file does not exist.
+    """
+    path = Path(file_path).resolve()
+
+    # Reject path traversal — the resolved path must not have come from '..' components
+    if ".." in Path(file_path).parts:
+        raise ValueError(
+            f"Path traversal detected: '{file_path}'. "
+            "Use absolute paths or paths relative to the working directory."
+        )
+
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    if not path.is_file():
+        raise ValueError(f"Not a regular file: {file_path}")
+
+    # Check extension
+    suffix = path.suffix.lower()
+    if suffix and suffix not in ALLOWED_EXTENSIONS:
+        raise ValueError(
+            f"File type '{suffix}' is not allowed. "
+            f"Supported: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+        )
+
+    return path
+
 
 def extract_text_from_pdf(file_path: str) -> str:
     """Extract text content from a PDF file.
@@ -59,6 +100,8 @@ def read_text_file(file_path: str) -> str:
 def extract_content(file_path: str) -> str:
     """Auto-detect file type and extract text content.
 
+    Validates the path to prevent traversal attacks, then extracts based on extension.
+
     Supported formats:
     - .pdf → PDF text extraction
     - .md, .markdown → Markdown (read as-is)
@@ -71,21 +114,21 @@ def extract_content(file_path: str) -> str:
     Returns:
         Extracted text content.
     """
-    path = Path(file_path)
-    suffix = path.suffix.lower()
+    validated = _validate_file_path(file_path)
+    safe_path = str(validated)
+    suffix = validated.suffix.lower()
 
     if suffix == ".pdf":
-        return extract_text_from_pdf(file_path)
-    elif suffix in (".md", ".markdown", ".txt", ".text", ".rst", ".html", ".htm"):
-        return read_text_file(file_path)
+        return extract_text_from_pdf(safe_path)
+    elif suffix in ALLOWED_EXTENSIONS:
+        return read_text_file(safe_path)
     else:
-        # Try to read as text — will fail gracefully on binary files
         try:
-            return read_text_file(file_path)
+            return read_text_file(safe_path)
         except UnicodeDecodeError:
             raise ValueError(
                 f"Unsupported file format: {suffix}. "
-                f"Supported: .pdf, .md, .txt, .html, .rst"
+                f"Supported: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
             )
 
 

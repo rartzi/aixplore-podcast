@@ -187,6 +187,9 @@ class CreateInput(BaseModel):
 # Helper
 # ---------------------------------------------------------------------------
 
+MAX_RAW_CONTENT_CHARS = 200_000  # Hard limit before truncation kicks in
+
+
 def _resolve_content(content: Optional[str], file_path: Optional[str]) -> str:
     """Resolve the source content from either raw text or a file path."""
     if content and file_path:
@@ -197,6 +200,12 @@ def _resolve_content(content: Optional[str], file_path: Optional[str]) -> str:
     if file_path:
         raw = extract_content(file_path)
     else:
+        if len(content) > MAX_RAW_CONTENT_CHARS:  # type: ignore
+            raise ValueError(
+                f"Content too large ({len(content)} chars). "  # type: ignore
+                f"Maximum is {MAX_RAW_CONTENT_CHARS} characters. "
+                "Consider using a file instead."
+            )
         raw = content  # type: ignore
 
     return truncate_content(raw)
@@ -270,11 +279,14 @@ async def podcast_generate_transcript(params: TranscriptInput) -> str:
         }
         return json.dumps(result, indent=2, ensure_ascii=False)
 
+    except (ValueError, FileNotFoundError) as e:
+        # Known input errors — safe to return directly
+        return json.dumps({"status": "error", "error": str(e)})
     except Exception as e:
         logger.error("Transcript generation failed: %s", e, exc_info=True)
         return json.dumps({
             "status": "error",
-            "error": str(e),
+            "error": f"Transcript generation failed: {type(e).__name__}",
             "hint": "Check your GEMINI_API_KEY and GEMINI_BASE_URL settings.",
         })
 
@@ -337,11 +349,13 @@ async def podcast_synthesize_audio(params: SynthesizeInput) -> str:
         }
         return json.dumps(result, indent=2)
 
+    except ValueError as e:
+        return json.dumps({"status": "error", "error": str(e)})
     except Exception as e:
         logger.error("Audio synthesis failed: %s", e, exc_info=True)
         return json.dumps({
             "status": "error",
-            "error": str(e),
+            "error": f"Audio synthesis failed: {type(e).__name__}",
             "hint": "Check your GEMINI_API_KEY, GEMINI_BASE_URL, and that the TTS model is available.",
         })
 
@@ -433,11 +447,13 @@ async def podcast_create(params: CreateInput) -> str:
         }
         return json.dumps(result, indent=2, ensure_ascii=False)
 
+    except (ValueError, FileNotFoundError) as e:
+        return json.dumps({"status": "error", "error": str(e)})
     except Exception as e:
         logger.error("Podcast creation failed: %s", e, exc_info=True)
         return json.dumps({
             "status": "error",
-            "error": str(e),
+            "error": f"Podcast creation failed: {type(e).__name__}",
             "hint": "Check your GEMINI_API_KEY, GEMINI_BASE_URL, and input content.",
         })
 
