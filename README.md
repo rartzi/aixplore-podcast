@@ -240,19 +240,19 @@ Single speaker, executive audience.
 export GEMINI_API_KEY="your-key"
 
 # Quick test with defaults
-python test_e2e.py
+python tests/test_e2e.py
 
 # Custom style & length
-python test_e2e.py --style scientific --length medium
+python tests/test_e2e.py --style scientific --length medium
 
 # Single speaker monologue
-python test_e2e.py --mode single --style news_briefing --length short
+python tests/test_e2e.py --mode single --style news_briefing --length short
 
 # Transcript only (skip audio)
-python test_e2e.py --transcript-only
+python tests/test_e2e.py --transcript-only
 
 # Full customization
-python test_e2e.py --style debate --audience expert --length long \
+python tests/test_e2e.py --style debate --audience expert --length long \
     --host "Ronen" --guest "Dr. Smith" \
     --host-voice Charon --guest-voice Aoede \
     --show "AIXplore Deep Dive"

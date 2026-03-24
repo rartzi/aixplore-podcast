@@ -16,12 +16,12 @@ uv pip install -e .
 uv run podcast-mcp
 
 # Run end-to-end test (requires GEMINI_API_KEY)
-uv run python test_e2e.py
-uv run python test_e2e.py --style scientific --length medium
-uv run python test_e2e.py --transcript-only
+uv run python tests/test_e2e.py
+uv run python tests/test_e2e.py --style scientific --length medium
+uv run python tests/test_e2e.py --transcript-only
 
 # Check available Gemini models
-uv run python check_models.py
+uv run python scripts/check_models.py
 ```
 
 ## Architecture

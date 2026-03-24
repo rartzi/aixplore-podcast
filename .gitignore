@@ -20,6 +20,12 @@ podcast_output/
 test_podcast_transcript.json
 test_transcript.json
 
+# Generated transcripts
+*_transcript.json
+
+# Eval workspace
+podcast-mcp-workspace/
+
 # OS
 .DS_Store
 Thumbs.db
