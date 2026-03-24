@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "podcast-mcp"
 version = "0.1.0"
 description = "AIXplore Podcast Generator — MCP server for creating engaging podcast audio from content using Gemini AI"
-readme = "SKILL.md"
+readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = [
