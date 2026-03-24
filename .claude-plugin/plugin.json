@@ -1,0 +1,23 @@
+{
+  "name": "podcast-mcp",
+  "description": "Generate podcast audio from documents, text, or any content using Gemini AI. Transforms PDFs, markdown, and text into natural-sounding podcast conversations with configurable voices, styles, and audience levels.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Ronen Artzi",
+    "url": "https://github.com/rartzi"
+  },
+  "repository": "https://github.com/rartzi/aixplore-podcast",
+  "license": "MIT",
+  "keywords": ["podcast", "audio", "tts", "gemini", "mcp", "content-to-audio", "text-to-speech"],
+  "skills": "./skills/",
+  "mcpServers": {
+    "podcast": {
+      "command": "uv",
+      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}", "podcast-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "",
+        "GEMINI_BASE_URL": "https://your-ai-gateway.example.com/v1beta"
+      }
+    }
+  }
+}
